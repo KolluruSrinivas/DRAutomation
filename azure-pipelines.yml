@@ -13,19 +13,14 @@ steps:
     inlineScript: |
       Write-Host "Checking Azure Site Recovery Vault..."
 
-      # Get Recovery Services Vault information
-      $vault = az backup vault show \
-        --name DRVault-WestUS \
-        --resource-group RG-WestUS-DR
-      
+      # Get Recovery Services Vault information with correct name and resource group
+      $vault = az backup vault show --name DR1 --resource-group DR-RG  # Changed resource group to DR-RG and vault name to DR1
+
       Write-Host "ASR Vault Info:"
       Write-Host $vault
 
       # If you want to list replicated items, you can run something like this:
-      $replicatedItems = az backup item list \
-        --vault-name DRVault-WestUS \
-        --resource-group RG-WestUS-DR \
-        --query "[].{Name:name, Type:type, ProtectionStatus:properties.protectionStatus}"
+      $replicatedItems = az backup item list --vault-name DR1 --resource-group DR-RG --query "[].{Name:name, Type:type, ProtectionStatus:properties.protectionStatus}"  # Changed resource group to DR-RG and vault name to DR1
       
       Write-Host "Replicated Items:"
       Write-Host $replicatedItems
@@ -39,17 +34,10 @@ steps:
       Write-Host "Starting replication for Windows Server VM..."
 
       # Replace 'WindowsVMName' with your actual VM name
-      $vmName = "recoveryvm"  
+      $vmName = "recoveryvm"  # This is where we define the VM name (no changes needed here)
 
       # Enable replication for the VM (replace with actual names and parameters)
-      az recoveryservices replication protected-item enable \
-        --vault-name DRVault-WestUS \
-        --resource-group RG-WestUS-DR \
-        --item-name $vmName \
-        --source-resource-group RG-EastUS \
-        --source-location EastUS \
-        --target-location WestUS \
-        --vm-name $vmName
+      az recoveryservices replication protected-item enable --vault-name DR1 --resource-group DR-RG --item-name $vmName --source-resource-group RG-EastUS --source-location EastUS --target-location WestUS --vm-name $vmName  # Changed resource group to DR-RG and vault name to DR1
       Write-Host "Replication started for $vmName"
 
 - task: AzureCLI@2
@@ -60,10 +48,7 @@ steps:
     inlineScript: |
       Write-Host "Initiating a Test Failover for Windows Server VM..."
 
-      # Trigger a Test Failover (replace with actual VM name)
-      az recoveryservices replication failover \
-        --vault-name DRVault-WestUS \
-        --resource-group RG-WestUS-DR \
-        --item-name "WindowsVMName" \
-        --failover-direction "Test"  # Use 'Test' to simulate failover without impacting production
-      Write-Host "Test Failover initiated for WindowsVMName"
+      # Use the same $vmName variable from previous task
+      az recoveryservices replication failover --vault-name DR1 --resource-group DR-RG --item-name $vmName --failover-direction "Test"  # Changed resource group to DR-RG and vault name to DR1
+      Write-Host "Test Failover initiated for $vmName"
+
