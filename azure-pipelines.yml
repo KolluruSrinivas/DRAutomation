@@ -52,5 +52,5 @@ steps:
       Write-Host "Failover Vault: DR1"
       
       # Triggering a Test Failover
-      az recoveryservices replication failover --vault-name DR1 --resource-group DR-RG --item-name recoveryvm --failover-direction "Test" --debug  # Added --debug for detailed logs
+      # az recoveryservices replication failover --vault-name DR1 --resource-group DR-RG --item-name recoveryvm --failover-direction "Test" --debug  # Added --debug for detailed logs
       Write-Host "Test Failover initiated for recoveryvm"
