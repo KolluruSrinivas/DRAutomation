@@ -14,13 +14,13 @@ steps:
       Write-Host "Checking Azure Site Recovery Vault..."
 
       # Get Recovery Services Vault information with correct name and resource group
-      $vault = az backup vault show --name DR1 --resource-group DR-RG --debug  # Added --debug for more details
+      $vault = az backup vault show --name DR1 --resource-group DR-RG --debug  # Ensure Vault is in West US
 
       Write-Host "ASR Vault Info:"
       Write-Host $vault
 
       # If you want to list replicated items, you can run something like this:
-      $replicatedItems = az backup item list --vault-name DR1 --resource-group DR-RG --query "[].{Name:name, Type:type, ProtectionStatus:properties.protectionStatus}" --debug  # Added --debug
+      $replicatedItems = az backup item list --vault-name DR1 --resource-group DR-RG --query "[].{Name:name, Type:type, ProtectionStatus:properties.protectionStatus}" --debug  # Listing replicated items
       Write-Host "Replicated Items:"
       Write-Host $replicatedItems
 
@@ -31,13 +31,15 @@ steps:
     scriptLocation: 'inlineScript'
     inlineScript: |
       Write-Host "Starting replication for Windows Server VM..."
-
-      # Replace 'recoveryvm' with your actual VM name
-      $vmName = "recoveryvm"  # This is where we define the VM name (no changes needed here)
+      Write-Host "VM Name: recoveryvm"
+      Write-Host "Source Resource Group: DisasterRG"
+      Write-Host "Vault Name: DR1"
+      Write-Host "Target Location: WestUS"
+      Write-Host "Source Location: EastUS"
 
       # Enable replication for the VM (replace with actual names and parameters)
-      az recoveryservices replication protected-item enable --vault-name DR1 --resource-group DR-RG --item-name $vmName --source-resource-group DisasterRG --source-location EastUS --target-location WestUS --vm-name $vmName --debug  # Changed resource group to DisasterRG
-      Write-Host "Replication started for $vmName"
+      az recoveryservices replication protected-item enable --vault-name DR1 --resource-group DR-RG --item-name recoveryvm --source-resource-group DisasterRG --source-location EastUS --target-location WestUS --vm-name recoveryvm --debug  # Correct locations
+      Write-Host "Replication started for recoveryvm"
 
 - task: AzureCLI@2
   inputs:
@@ -46,7 +48,9 @@ steps:
     scriptLocation: 'inlineScript'
     inlineScript: |
       Write-Host "Initiating a Test Failover for Windows Server VM..."
-
-      # Use the same $vmName variable from previous task
-      az recoveryservices replication failover --vault-name DR1 --resource-group DR-RG --item-name $vmName --failover-direction "Test" --debug  # Added --debug for more details
-      Write-Host "Test Failover initiated for $vmName"
+      Write-Host "VM Name: recoveryvm"
+      Write-Host "Failover Vault: DR1"
+      
+      # Triggering a Test Failover
+      az recoveryservices replication failover --vault-name DR1 --resource-group DR-RG --item-name recoveryvm --failover-direction "Test" --debug  # Added --debug for detailed logs
+      Write-Host "Test Failover initiated for recoveryvm"
