@@ -1,0 +1,69 @@
+trigger:
+- main  # Change this to the branch you want to trigger the pipeline from
+
+pool:
+  vmImage: 'windows-latest'  # Use a Windows-based agent to run Windows Server-specific commands
+
+steps:
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'AzureConnection-ARM'  # Your Azure Service Connection name
+    scriptType: 'pscore'  # Use PowerShell Core for Windows
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      Write-Host "Checking Azure Site Recovery Vault..."
+
+      # Get Recovery Services Vault information
+      $vault = az backup vault show \
+        --name DRVault-WestUS \
+        --resource-group RG-WestUS-DR
+      
+      Write-Host "ASR Vault Info:"
+      Write-Host $vault
+
+      # If you want to list replicated items, you can run something like this:
+      $replicatedItems = az backup item list \
+        --vault-name DRVault-WestUS \
+        --resource-group RG-WestUS-DR \
+        --query "[].{Name:name, Type:type, ProtectionStatus:properties.protectionStatus}"
+      
+      Write-Host "Replicated Items:"
+      Write-Host $replicatedItems
+
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'AzureConnection-ARM'  # Your Azure Service Connection name
+    scriptType: 'pscore'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      Write-Host "Starting replication for Windows Server VM..."
+
+      # Replace 'WindowsVMName' with your actual VM name
+      $vmName = "recoveryvm"  
+
+      # Enable replication for the VM (replace with actual names and parameters)
+      az recoveryservices replication protected-item enable \
+        --vault-name DRVault-WestUS \
+        --resource-group RG-WestUS-DR \
+        --item-name $vmName \
+        --source-resource-group RG-EastUS \
+        --source-location EastUS \
+        --target-location WestUS \
+        --vm-name $vmName
+      Write-Host "Replication started for $vmName"
+
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'AzureConnection-ARM'  # Your Azure Service Connection name
+    scriptType: 'pscore'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      Write-Host "Initiating a Test Failover for Windows Server VM..."
+
+      # Trigger a Test Failover (replace with actual VM name)
+      az recoveryservices replication failover \
+        --vault-name DRVault-WestUS \
+        --resource-group RG-WestUS-DR \
+        --item-name "WindowsVMName" \
+        --failover-direction "Test"  # Use 'Test' to simulate failover without impacting production
+      Write-Host "Test Failover initiated for WindowsVMName"
