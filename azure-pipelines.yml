@@ -13,7 +13,7 @@ steps:
     inlineScript: |
       Write-Host "Checking Azure Site Recovery Vault..."
 
-      # Get Recovery Services Vault information with correct name and resource group
+      # Get Recovery Services Vault information in West US with correct name and resource group
       $vault = az backup vault show --name DR1 --resource-group DR-RG --debug  # Ensure Vault is in West US
 
       Write-Host "ASR Vault Info:"
@@ -52,5 +52,5 @@ steps:
       Write-Host "Failover Vault: DR1"
       
       # Triggering a Test Failover
-      # az recoveryservices replication failover --vault-name DR1 --resource-group DR-RG --item-name recoveryvm --failover-direction "Test" --debug  # Added --debug for detailed logs
+      az recoveryservices replication failover --vault-name DR1 --resource-group DR-RG --item-name recoveryvm --failover-direction "Test" --debug  # Added --debug for detailed logs
       Write-Host "Test Failover initiated for recoveryvm"
