@@ -14,7 +14,7 @@ steps:
     scriptLocation: inlineScript
     inlineScript: |
       Write-Host "Enabling Azure Backup for VM: recoveryvm"
-      az backup protection enable-for-vm
-        --resource-group DR-RG
-        --vault-name DR1
-        --vm recoveryvm
+      az backup protection enable-for-vm `
+        --resource-group DR-RG `
+        --vault-name DR1 `
+        --vm recoveryvm `
