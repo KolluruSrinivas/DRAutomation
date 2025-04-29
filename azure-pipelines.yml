@@ -5,52 +5,16 @@ pool:
   vmImage: 'windows-latest'  # Use a Windows-based agent to run Windows Server-specific commands
 
 steps:
+# STEP 1: Enable Backup for the VM
 - task: AzureCLI@2
+  displayName: 'Enable Backup for Windows VM'
   inputs:
-    azureSubscription: 'AzureConnection-ARM'  # Your Azure Service Connection name
-    scriptType: 'pscore'  # Use PowerShell Core for Windows
-    scriptLocation: 'inlineScript'
+    azureSubscription: AzureConnection-ARM
+    scriptType: pscore
+    scriptLocation: inlineScript
     inlineScript: |
-      Write-Host "Checking Azure Site Recovery Vault..."
-
-      # Get Recovery Services Vault information in West US with correct name and resource group
-      $vault = az backup vault show --name DR1 --resource-group DR-RG --debug  # Ensure Vault is in West US
-
-      Write-Host "ASR Vault Info:"
-      Write-Host $vault
-
-      # If you want to list replicated items, you can run something like this:
-      $replicatedItems = az backup item list --vault-name DR1 --resource-group DR-RG --query "[].{Name:name, Type:type, ProtectionStatus:properties.protectionStatus}" --debug  # Listing replicated items
-      Write-Host "Replicated Items:"
-      Write-Host $replicatedItems
-
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'AzureConnection-ARM'  # Your Azure Service Connection name
-    scriptType: 'pscore'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      Write-Host "Starting replication for Windows Server VM..."
-      Write-Host "VM Name: recoveryvm"
-      Write-Host "Source Resource Group: DisasterRG"
-      Write-Host "Vault Name: DR1"
-      Write-Host "Target Location: WestUS"
-      Write-Host "Source Location: EastUS"
-
-      # Enable replication for the VM (replace with actual names and parameters)
-      az recoveryservices replication protected-item enable --vault-name DR1 --resource-group DR-RG --item-name recoveryvm --source-resource-group DisasterRG --source-location EastUS --target-location WestUS --vm-name recoveryvm --debug  # Correct locations
-      Write-Host "Replication started for recoveryvm"
-
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'AzureConnection-ARM'  # Your Azure Service Connection name
-    scriptType: 'pscore'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      Write-Host "Initiating a Test Failover for Windows Server VM..."
-      Write-Host "VM Name: recoveryvm"
-      Write-Host "Failover Vault: DR1"
-      
-      # Triggering a Test Failover
-      az recoveryservices replication failover --vault-name DR1 --resource-group DR-RG --item-name recoveryvm --failover-direction "Test" --debug  # Added --debug for detailed logs
-      Write-Host "Test Failover initiated for recoveryvm"
+      Write-Host "Enabling Azure Backup for VM: recoveryvm"
+      az backup protection enable-for-vm
+        --resource-group DR-RG
+        --vault-name DR1
+        --vm recoveryvm
